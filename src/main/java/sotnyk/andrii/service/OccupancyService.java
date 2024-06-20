@@ -21,7 +21,13 @@ public class OccupancyService {
     //TODO: read the prices from e.g. a database
     @PostConstruct
     public void initPrices() {
-        this.prices = List.of(23.0, 45.0, 155.0, 374.0, 22.0, 99.99, 100.0, 101.0, 115.0, 209.0);
+        List<Double> customerPrices = List.of(23.0, 45.0, 155.0, 374.0, 22.0, 99.99, 100.0, 101.0, 115.0, 209.0);
+        setCustomerPrices(customerPrices);
+    }
+
+    public void setCustomerPrices(List<Double> prices) {
+        this.prices = new ArrayList<>(prices);
+        this.prices.sort(Comparator.reverseOrder());
     }
 
     public Map<RoomType, RoomOccupancy> getOptimalOccupancy(int freePremiumRooms, int freeEconomyRooms) {
@@ -30,7 +36,25 @@ public class OccupancyService {
         List<Double> premiumRooms = new ArrayList<>();
         List<Double> economyRooms = new ArrayList<>();
 
-        //TODO: insert occupancy calculation logic here
+        int roomsToAllocate = prices.size();
+        for (double price : prices) {
+            if (price >= 100) {
+                if (premiumRooms.size() < freePremiumRooms) {
+                    premiumRooms.add(price);
+                }
+            } else {
+                if (roomsToAllocate > freeEconomyRooms && premiumRooms.size() < freePremiumRooms) {
+                    premiumRooms.add(price);
+                } else {
+                    if (economyRooms.size() < freeEconomyRooms) {
+                        economyRooms.add(price);
+                    } else {
+                        break;
+                    }
+                }
+            }
+            roomsToAllocate--;
+        }
 
         double premiumRent = premiumRooms.stream().mapToDouble(p -> p).sum();
         double economyRent = economyRooms.stream().mapToDouble(p -> p).sum();
