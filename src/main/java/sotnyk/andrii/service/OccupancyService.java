@@ -16,21 +16,26 @@ public class OccupancyService {
 
     private static final Logger logger = LoggerFactory.getLogger(OccupancyService.class);
 
+    public static final List<Double> DEFAULT_PRICES = List.of(23.0, 45.0, 155.0, 374.0, 22.0, 99.99, 100.0, 101.0, 115.0, 209.0);
+
     private List<Double> prices = new ArrayList<>();
 
     //TODO: read the prices from e.g. a database
     @PostConstruct
     public void initPrices() {
-        List<Double> customerPrices = List.of(23.0, 45.0, 155.0, 374.0, 22.0, 99.99, 100.0, 101.0, 115.0, 209.0);
-        setCustomerPrices(customerPrices);
+        setCustomerPrices(DEFAULT_PRICES);
     }
 
     public void setCustomerPrices(List<Double> prices) {
-        this.prices = new ArrayList<>(prices);
-        this.prices.sort(Comparator.reverseOrder());
+        this.prices = prices.stream()
+                .filter(p -> p != null && p > 0)
+                .sorted(Comparator.reverseOrder())
+                .toList();
     }
 
     public Map<RoomType, RoomOccupancy> getOptimalOccupancy(int freePremiumRooms, int freeEconomyRooms) {
+        freePremiumRooms = Math.max(freePremiumRooms, 0);
+        freeEconomyRooms = Math.max(freeEconomyRooms, 0);
         logger.info("Free rooms: Premium = {}, Economy = {}", freePremiumRooms, freeEconomyRooms);
         logger.info("Customer prices: {}", prices);
         List<Double> premiumRooms = new ArrayList<>();
